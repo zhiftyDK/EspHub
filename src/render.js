@@ -1,6 +1,9 @@
 const { exec } = require("node:child_process");
 const { platform } = require("node:process");
 const ping = require("./ping");
+const Datastore = require("nedb");
+const database = new Datastore("database.db");
+database.loadDatabase();
 
 // Default base of backend
 let base;
@@ -34,7 +37,7 @@ py.stdout.on('data', (data) => {
 });
 
 document.getElementById("device-save-button").addEventListener("click", () => {    
-    const deviceName = document.getElementById("device-name").value;
+    const deviceName = document.getElementById("device-name").value.toUpperCase();
     const deviceType = document.getElementById("device-type").options[document.getElementById("device-type").selectedIndex].text;
     const deviceIp = document.getElementById("device-ip").value;
     const deviceList = document.getElementById("device-list");
@@ -54,20 +57,32 @@ document.getElementById("device-save-button").addEventListener("click", () => {
             </p>
             <div class="row">
                 <div class="col">
-                    <button class="btn btn-secondary" onclick="openLogs('${uuid}')" data-bs-toggle="modal" data-bs-target="#logsModal">Logs <i class="fa-solid fa-file-lines"></i></button>
-                    <button class="btn btn-secondary" onclick="restartDevice('${uuid}')">Restart <i class="fa-solid fa-rotate"></i></button>
-                    <button class="btn btn-danger" onclick="deleteDevice('${uuid}')">Delete <i class="fa-solid fa-trash-can"></i></button>
+                    <button class="btn btn-secondary" onclick="openLogs('${uuid}')" data-bs-toggle="modal" data-bs-target="#logsModal"><i class="fa-solid fa-file-lines"></i></button>
+                    <button class="btn btn-secondary" onclick="restartDevice('${uuid}')"><i class="fa-solid fa-rotate"></i></button>
+                    <button class="btn btn-danger" onclick="deleteDevice('${uuid}')"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
             </div>
         </div>
     </div>
     `;
     deviceList.appendChild(newDevice);
+    let databaseData = `<div class="col-4" id="${uuid}">${newDevice.innerHTML}</div>`
+    database.insert({Data: databaseData, Id: uuid});
     checkDeviceStatus();
     document.getElementById("device-name").value = "";
     document.getElementById("device-ip").value = "";
 });
 
+database.find({}, (err, output) => {
+    if (err) {
+        console.error(err);
+    }
+    const deviceList = document.getElementById("device-list");
+    output.forEach(device => {
+        deviceList.innerHTML = deviceList.innerHTML + device.Data;
+    });
+    checkDeviceStatus();
+});
 
 let logsOn = false;
 function openLogs(id) {
@@ -115,6 +130,9 @@ function restartDevice(id) {
 
 function deleteDevice(id) {
     document.getElementById(id).remove();
+    database.remove({Id: id}, {}, (err, numRemoved) => {
+        console.log("Removed device with index: " + numRemoved);
+    });
 }
 
 function isOnline(id) {

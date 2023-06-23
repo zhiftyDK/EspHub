@@ -1,0 +1,55 @@
+#include "ESP8266WiFi.h"
+#include "ESP8266WebServer.h"
+ 
+ESP8266WebServer server(80);
+String savedWebLog = "";
+
+void setup() {
+  // Start of setup
+  espHubInit([WIFI_SSID], [WIFI_PASSWORD]);
+
+  [ESPHUB_ADDONS]
+
+  // End of setup
+  server.begin();
+  Serial.println("Server listening!");
+  webLog("Server listening!");
+}
+
+void loop() {
+  server.handleClient();
+}
+
+void webLog(String input) {
+  savedWebLog = savedWebLog + input + "<br>";
+}
+
+void espHubInit(String ssid, String pass) {
+  Serial.begin(115200);
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+  Serial.println("Connected successfully!");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+  webLog("Connected successfully!");
+  webLog("IP address: " + WiFi.localIP().toString());
+  server.enableCORS(true);
+  server.on("/restart", []() {
+    server.send(200, "text/plain", "Restarting device!");
+    ESP.restart();
+  });
+  server.on("/weblog", []() {
+    server.send(200, "text/plain", savedWebLog);
+  });
+  server.on("/ping", []() {
+    server.send(200, "text/plain", "Sending pong!");
+    webLog("pong!");
+  });
+  server.on("/", []{
+    server.send(200, "text/plain", "EspHub Device!");
+  });
+}

@@ -1,8 +1,8 @@
 {
-  "name": "Atlas",
-  "productName": "Atlas",
+  "name": "EspHub",
+  "productName": "EspHub",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "Esp8266 & Esp32 management interface!",
   "main": "src/index.js",
   "scripts": {
     "start": "electron-forge start",
@@ -19,6 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
+    "nedb": "^1.8.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
